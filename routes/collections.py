@@ -7,3 +7,4 @@ collections_router = APIRouter(prefix="/collections")
 async def get_collections():
    collection_names = oxide.collection_names()
    return collection_names
+      
