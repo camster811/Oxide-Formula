@@ -15,5 +15,7 @@ app.add_middleware(
 )
 app.include_router(collections_router, prefix="/api")
 app.include_router(modules_router, prefix="/api")
+app.include_router(retrieve_router, prefix="/api")
 if __name__ == "__main__":
     uvicorn.run(app)
+    
