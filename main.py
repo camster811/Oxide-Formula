@@ -3,6 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import collections_router, modules_router
+from routes import retrieve_router
 
 app = FastAPI()
 app.add_middleware(
