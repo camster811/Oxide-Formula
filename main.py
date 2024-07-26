@@ -1,11 +1,22 @@
 import uvicorn 
-
+import configparser
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import collections_router, modules_router
-from routes import retrieve_router
-from routes import files_router
 
+import sys
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+host = config.get("General", "host")
+port = config.getint("General", "port")
+oxide_path = config.get("Oxide", "path")
+
+
+sys.path.append(oxide_path)
+
+
+from routes import collections_router, modules_router, retrieve_router, files_router
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
