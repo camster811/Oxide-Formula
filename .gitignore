@@ -5,3 +5,5 @@ env/
 */__pycache__/
 .vscode/
 config.ini
+config.ini
+/*.ini
