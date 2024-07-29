@@ -16,7 +16,7 @@ oxide_path = config.get("Oxide", "path")
 sys.path.append(oxide_path)
 
 
-from routes import collections_router, modules_router, retrieve_router, files_router
+from routes import collections_router, modules_router, retrieve_router
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -28,7 +28,6 @@ app.add_middleware(
 app.include_router(collections_router, prefix="/api")
 app.include_router(modules_router, prefix="/api")
 app.include_router(retrieve_router, prefix="/api")
-app.include_router(files_router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(app)

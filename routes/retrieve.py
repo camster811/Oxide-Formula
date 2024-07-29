@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from oxide.core import oxide as oxide
-from pydantic import BaseModel
  
      
 retrieve_router = APIRouter()
