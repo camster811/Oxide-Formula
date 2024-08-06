@@ -3,7 +3,7 @@ from oxide.core import oxide as oxide
 from fastapi import HTTPException
 collections_router = APIRouter(prefix="/collections")
 
-@collections_router.get("/get")
+@collections_router.get("/")
 async def get_collections():
    collection_names = oxide.collection_names()
    return collection_names
