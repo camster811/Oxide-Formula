@@ -2,7 +2,7 @@ import uvicorn
 import configparser
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
 import sys
 
 config = configparser.ConfigParser()
@@ -13,6 +13,16 @@ clientport = config.getint("General", "clientport")
 hostport = config.getint("General", "hostport")
 oxide_path = config.get("Oxide", "path")
 clientip = config.get("General", "clientip")
+
+# Check if oxide_path is a valid path
+while not os.path.exists(oxide_path) or not os.path.isdir(oxide_path):
+    print(f"The path {oxide_path} is invalid.")
+    oxide_path = input("Please enter the path to oxide/src: ")
+
+# Update the config.ini file with the new path
+config.set("Oxide", "path", oxide_path)
+with open("config.ini", "w") as configfile:
+    config.write(configfile)
 
 sys.path.append(oxide_path)
 
