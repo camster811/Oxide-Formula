@@ -6,5 +6,4 @@ env/
 .pyc
 .vscode/
 config.ini
-config.ini
 /*.ini
