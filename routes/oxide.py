@@ -1,54 +1,91 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 from oxide.core import oxide as oxide
-from fastapi import HTTPException
-import json
-import traceback
+from typing import Any
+
+try:
+    import networkx as nx
+except ImportError:
+    nx = None
 
 oxide_router = APIRouter(prefix="/oxide")
 
+
+class MethodsResponse(BaseModel):
+    methods: dict[str, list[str]]
+
+
+class RetrieveAllResponse(BaseModel):
+    module: str
+    results: dict
+
+
+class GetFieldRequest(BaseModel):
+    module: str
+    oid: str
+    field: str
+    opts: dict = Field(default_factory=dict)
+
+
+class GetFieldResponse(BaseModel):
+    module: str
+    oid: str
+    field: str
+    value: Any = None
+
+
+def _normalize_result(value):
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+
+    if isinstance(value, set):
+        return [_normalize_result(item) for item in value]
+
+    if isinstance(value, tuple):
+        return [_normalize_result(item) for item in value]
+
+    if isinstance(value, list):
+        return [_normalize_result(item) for item in value]
+
+    if isinstance(value, dict):
+        return {str(key): _normalize_result(item) for key, item in value.items()}
+
+    if nx is not None and isinstance(value, nx.Graph):
+        return nx.node_link_data(value)
+
+    return str(value)
+
+
 supported_api_funs = {
-    #fun name : [args]
     "retrieve_all": ["module"],
-    "retrieve": ["module","oid or oids_list","opts"],
-    "get_field": ["module","oid or oids_list","field","opts"]
+    "get_field": ["module", "oid", "field", "opts"],
 }
 
 @oxide_router.get("/methods")
-async def api_get_funs():
-    return supported_api_funs
+async def api_get_funs() -> MethodsResponse:
+    return MethodsResponse(methods=supported_api_funs)
 
-@oxide_router.get("/retrieve/")
-async def retrieve_module(mod,oid,opts="{}",oids_list=None):
-    opts = json.loads(opts)
-    try:
-        if oids_list is not None:
-            results=oxide.retrieve(mod,oids_list,opts)
-        else:
-            results = oxide.retrieve(mod,oid,opts)
-        print(results)
-        return results
-    except Exception as e:
-        print(traceback.format_exc())
-        return {"Internal error": str(e)}
 
-@oxide_router.get("/retrieve_all/")
-async def retrieve_all_module(mod):
+@oxide_router.get("/retrieve-all/{module_name}")
+async def retrieve_all_module(module_name: str) -> RetrieveAllResponse:
     try:
-        results = oxide.retrieve_all(mod)
-        return results
+        results = _normalize_result(oxide.retrieve_all(module_name))
+        return RetrieveAllResponse(module=module_name, results=results)
     except Exception as e:
-        return {"Internal error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
-@oxide_router.get("/get_field/")
-async def get_field_module(mod,oid,field,opts="{}",oids_list=None):
-    opts = json.loads(opts)
+
+@oxide_router.post("/get-field")
+async def get_field_module(payload: GetFieldRequest) -> GetFieldResponse:
     try:
-        if oids_list is not None:
-            results = oxide.get_field(mod,oid,field,opts,oids_list)
-        else:
-            results = oxide.get_field(mod,oid,field,opts)
-        if not results: #don't know a better way to handle ghidra disasm failing
-            return {"error": -1}
-        return results
+        value = _normalize_result(
+            oxide.get_field(payload.module, payload.oid, payload.field, payload.opts)
+        )
+        return GetFieldResponse(
+            module=payload.module,
+            oid=payload.oid,
+            field=payload.field,
+            value=value,
+        )
     except Exception as e:
-        return {"Internal error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
